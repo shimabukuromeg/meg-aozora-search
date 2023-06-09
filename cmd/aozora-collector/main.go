@@ -62,7 +62,6 @@ func findAuthorAndZIP(siteURL string) (string, string) {
 var pageURLFormat = "https://www.aozora.gr.jp/cards/%s/card%s.html"
 
 func findEntries(siteURL string) ([]Entry, error) {
-	// TODO: Implement
 	// goqueryでURLからDOMオブジェクトを取得する
 	doc, err := goquery.NewDocument(siteURL)
 	if err != nil {
