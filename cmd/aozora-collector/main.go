@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/text/encoding/japanese"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Entry struct {
@@ -141,7 +144,35 @@ func extractText(zipURL string) (string, error) {
 	return "", errors.New("contents not found")
 }
 
+func setupDB(dsn string) (*sql.DB, error) {
+	// sql.Open("sqlite3", dsn)を用いて、指定されたデータソース（dsn）でSQLite3データベースに接続
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// テーブルを作成するQuery
+	queries := []string{
+		`CREATE TABLE IF NOT EXISTS authors(author_id TEXT, author TEXT, PRIMARY KEY (author_id))`,
+		`CREATE TABLE IF NOT EXISTS contents(author_id TEXT, title_id TEXT, title TEXT, content TEXT, PRIMARY KEY (author_id, title_id))`,
+		`CREATE VIRTUAL TABLE IF NOT EXISTS contents_fts USING fts4(words)`,
+	}
+	for _, query := range queries {
+		// db.Exec(query)を用いて、Queryを実行
+		_, err = db.Exec(query)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return db, nil
+}
+
 func main() {
+	db, err := setupDB("database.sqlite")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 	listURL := "https://www.aozora.gr.jp/index_pages/person879.html"
 	entries, err := findEntries(listURL)
 	if err != nil {
