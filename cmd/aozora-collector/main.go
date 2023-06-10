@@ -28,7 +28,6 @@ type Entry struct {
 
 // 作者とZIPファイルのURLを取得する
 func findAuthorAndZIP(siteURL string) (string, string) {
-	// log.Println("query", siteURL)
 	doc, err := goquery.NewDocument(siteURL)
 	if err != nil {
 		return "", ""
@@ -67,13 +66,19 @@ func findEntries(siteURL string) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
+	// URLが特定の形式（".*/cards/[0-9]+/card[0-9]+.html"）に一致するかどうかを確認するため	の正規表現
 	pat := regexp.MustCompile(`.*/cards/([0-9]+)/card([0-9]+).html$`)
 	entries := []Entry{}
+	// doc.Findはgoqueryのメソッドで、DOM内のすべての<ol>（順序付けられたリスト）要素の中の<li>（リスト項目）の中の<a>（アンカー）要素を探し、それぞれに対して処理を行う
 	doc.Find("ol li a").Each(func(n int, elem *goquery.Selection) {
+
+		// 各<a>要素のhref属性（リンク先URL）を取得し、先程の正規表現に一致するかを確認します。
+		// 一致する場合、tokenは一致したグループ（この場合は2つの数値）を含む配列になります。
 		token := pat.FindStringSubmatch(elem.AttrOr("href", ""))
 		if len(token) != 3 {
 			return
 		}
+		// titleは<a>要素のテキスト内容（リンクテキスト）を表します。
 		title := elem.Text()
 		pageURL := fmt.Sprintf(pageURLFormat, token[1], token[2])
 		author, zipURL := findAuthorAndZIP(pageURL)
