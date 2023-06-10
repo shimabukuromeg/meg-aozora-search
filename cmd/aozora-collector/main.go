@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,8 +14,11 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/ikawaha/kagome-dict/ipa"
+	"github.com/ikawaha/kagome/v2/tokenizer"
 	"golang.org/x/text/encoding/japanese"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,15 +35,18 @@ type Entry struct {
 
 // 作者とZIPファイルのURLを取得する
 func findAuthorAndZIP(siteURL string) (string, string) {
+	// 指定したURLのHTMLドキュメントを取得します
 	doc, err := goquery.NewDocument(siteURL)
 	if err != nil {
 		return "", ""
 	}
+	// 著者の名前をHTMLドキュメントから探し出す
 	author := doc.Find("table[summary=作家データ] tr:nth-child(2) td:nth-child(2)").First().Text()
 	zipURL := ""
 	doc.Find("table.download a").Each(func(n int, elem *goquery.Selection) {
 		href := elem.AttrOr("href", "")
-		if strings.HasSuffix(href, ".zip") {
+		// href属性（リンク先）が.zipで終わるものがあれば、それをzipURLに保存する
+		if strings.HasSuffix(href, ".zip") && !strings.HasSuffix(href, "ttz.zip") {
 			zipURL = href
 		}
 	})
@@ -100,9 +107,9 @@ func findEntries(siteURL string) ([]Entry, error) {
 	return entries, nil
 }
 
-func extractText(zipURL string) (string, error) {
+func extractText(entry Entry) (string, error) {
 	// URLからHTTP GETリクエストを送信し、レスポンスを取得する
-	resp, err := http.Get(zipURL)
+	resp, err := http.Get(entry.ZipURL)
 	if err != nil {
 		return "", err
 	}
@@ -141,7 +148,12 @@ func extractText(zipURL string) (string, error) {
 			return string(b), nil
 		}
 	}
-	return "", errors.New("contents not found")
+	jsonData, err := json.Marshal(entry)
+	if err != nil {
+		fmt.Println("JSONマーシャリングに失敗しました：", err)
+		return "", nil
+	}
+	return "", errors.New("contents not found " + string(jsonData))
 }
 
 func setupDB(dsn string) (*sql.DB, error) {
@@ -167,6 +179,60 @@ func setupDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+func addEntry(db *sql.DB, entry *Entry, content string) error {
+	// [INSERT 1] エントリーの作者IDと作者が挿入されます。
+	_, err := db.Exec(`
+        REPLACE INTO authors(author_id, author) values(?, ?)
+    `,
+		entry.AuthorID,
+		entry.Author,
+	)
+	if err != nil {
+		return err
+	}
+
+	// [INSERT 2] エントリーの作者ID、タイトルID、タイトル、そしてコンテンツが挿入されます。
+	res, err := db.Exec(`
+        REPLACE INTO contents(author_id, title_id, title, content) values(?, ?, ?, ?)
+    `,
+		entry.AuthorID,
+		entry.TitleID,
+		entry.Title,
+		content,
+	)
+	if err != nil {
+		return err
+	}
+
+	// 上記で挿入した行のIDを取得します。これはcontents_ftsテーブルへの挿入に使用されます。
+	docID, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	// 形態素解析器（トークナイザー）を作成します。このトークナイザーは日本語の文章を単語に分割するために使用されます
+	t, err := tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
+	if err != nil {
+		return err
+	}
+
+	// コンテンツを単語に分割します。この結果はsegとして取得されます。
+	seg := t.Wakati(content)
+
+	// [INSERT 3] テーブルに文書IDと分割された単語のリストが挿入（あるいは既存の同一IDの行があれば置換）されます。
+	// 分割された単語のリストはスペースで連結され、一つの文字列として格納されます。
+	_, err = db.Exec(`
+        REPLACE INTO contents_fts(docid, words) values(?, ?)
+    `,
+		docID,
+		strings.Join(seg, " "),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	db, err := setupDB("database.sqlite")
 	if err != nil {
@@ -178,14 +244,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	log.Printf("found %d entries", len(entries))
 	for _, entry := range entries {
-		content, err := extractText(entry.ZipURL)
+		content, err := extractText(entry)
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
-		fmt.Println(entry.SiteURL)
-		fmt.Println(content)
+		// `&` をつけると、値のアドレスを取得できる。
+		err = addEntry(db, &entry, content)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		time.Sleep(time.Second * 1)
 	}
 }
