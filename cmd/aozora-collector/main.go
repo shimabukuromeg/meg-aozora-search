@@ -90,6 +90,7 @@ func findEntries(siteURL string) ([]Entry, error) {
 		}
 		// titleは<a>要素のテキスト内容（リンクテキスト）を表します。
 		title := elem.Text()
+		// 作品情報にアクセスするためのURLを作成します。
 		pageURL := fmt.Sprintf(pageURLFormat, token[1], token[2])
 		author, zipURL := findAuthorAndZIP(pageURL)
 		if zipURL != "" {
