@@ -9,14 +9,14 @@ before:
 builds:
   - id: aozora-collector-darwin
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     main: ./cmd/aozora-collector # main.goがある場所
     binary: aozora-collector
     goos:
       - darwin
   - id: aozora-search-darwin
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     main: ./cmd/aozora-search # main.goがある場所
     binary: aozora-search
     goos:
