@@ -22,8 +22,7 @@ jobs:
         with:
           go-version: stable
       - name: Install Cross Compiler
-        run: |
-          sudo apt-get -y install gcc-aarch64-linux-gnu
+        run: sudo apt-get -y install gcc-aarch64-linux-gnu
       - name: Run Go Releaser
         uses: goreleaser/goreleaser-action@v4
         with:
