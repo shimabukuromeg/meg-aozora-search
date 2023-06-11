@@ -16,7 +16,7 @@ builds:
       - linux
     goarch:
       - amd64
-      - arm64
+      # - arm64
   - id: aozora-search
     env:
       - CGO_ENABLED=1
@@ -26,16 +26,7 @@ builds:
       - linux
     goarch:
       - amd64
-      - arm64
-    overrides:
-      - goos: linux
-        goarch: arm64
-        env:
-          - CC=gcc-aarch64-linux-gnu
-      - goos: linux
-        goarch: amd64
-        env:
-          - CC=gcc
+      # - arm64
 
 archives:
   - format: tar.gz
