@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release-linux-binary:
-    name: Release
+    name: Linux Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,7 +31,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-darwin-binary:
-    name: Release
+    name: Darwin Release
     runs-on: macos-latest
     steps:
       - name: Checkout

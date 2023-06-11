@@ -7,7 +7,7 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-  - id: aozora-collector
+  - id: aozora-collector-linux
     env:
       - CGO_ENABLED=1
     main: ./cmd/aozora-collector # main.goがある場所
@@ -17,7 +17,7 @@ builds:
     goarch:
       - amd64
       # - arm64
-  - id: aozora-search
+  - id: aozora-search-linux
     env:
       - CGO_ENABLED=1
     main: ./cmd/aozora-search # main.goがある場所

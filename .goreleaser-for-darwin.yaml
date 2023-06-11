@@ -7,14 +7,14 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-  - id: aozora-collector
+  - id: aozora-collector-darwin
     env:
       - CGO_ENABLED=1
     main: ./cmd/aozora-collector # main.goがある場所
     binary: aozora-collector
     goos:
       - darwin
-  - id: aozora-search
+  - id: aozora-search-darwin
     env:
       - CGO_ENABLED=1
     main: ./cmd/aozora-search # main.goがある場所
