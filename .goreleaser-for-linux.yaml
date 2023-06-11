@@ -13,7 +13,6 @@ builds:
     main: ./cmd/aozora-collector # main.goがある場所
     binary: aozora-collector
     goos:
-      - darwin
       - linux
   - id: aozora-search
     env:
@@ -21,7 +20,6 @@ builds:
     main: ./cmd/aozora-search # main.goがある場所
     binary: aozora-search
     goos:
-      - darwin
       - linux
 
 archives:
