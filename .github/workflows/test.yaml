@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
-        go: ["1.19", "1.20"]
+        go: ["1.20"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -23,4 +23,6 @@ jobs:
 
       - run: go test ./...
       # benchmemを付けることで一処理あたりのメモリアロケーション数が得られます。
-      - run: go test -bench . -benchmem
+      - run: |
+          cd ./cmd/aozora-collector
+          go test -bench ./... -benchmem
