@@ -10,14 +10,6 @@ builds:
   - id: aozora-collector
     env:
       - CGO_ENABLED=1
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
-      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
-      - CC=o64-clang
-      - CXX=o64-clang++
-    flags:
-      - -mod=readonly
-    ldflags:
-      - -s -w -X main.version={{.Version}}
     main: ./cmd/aozora-collector # main.goがある場所
     binary: aozora-collector
     goos:
@@ -27,14 +19,6 @@ builds:
   - id: aozora-search
     env:
       - CGO_ENABLED=1
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
-      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
-      - CC=o64-clang
-      - CXX=o64-clang++
-    flags:
-      - -mod=readonly
-    ldflags:
-      - -s -w -X main.version={{.Version}}
     main: ./cmd/aozora-search # main.goがある場所
     binary: aozora-search
     goos:
