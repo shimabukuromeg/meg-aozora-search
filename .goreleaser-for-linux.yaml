@@ -14,8 +14,9 @@ builds:
     binary: aozora-collector
     goos:
       - linux
-    # goarch:
-    #   - amd64
+    goarch:
+      - amd64
+      - arm64
   - id: aozora-search
     env:
       - CGO_ENABLED=1
@@ -23,8 +24,18 @@ builds:
     binary: aozora-search
     goos:
       - linux
-    # goarch:
-    #   - amd64
+    goarch:
+      - amd64
+      - arm64
+    overrides:
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=gcc-aarch64-linux-gnu
+      - goos: linux
+        goarch: amd64
+        env:
+          - CC=gcc
 
 archives:
   - format: tar.gz
